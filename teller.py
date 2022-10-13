@@ -13,6 +13,7 @@ def main():
     args = arg_parser.parse_args()
 
     directory = 'statements'
+    #'C:\\Users\\lizra\\Google Drive\\My\\ Finances\\Github\\ Teller\\ Clone\\Teller\\statements\\RBC'
 
     if args.directory:
         assert os.path.exists(args.directory)

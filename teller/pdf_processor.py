@@ -6,7 +6,7 @@ from datetime import datetime, timedelta
 from dateutil.relativedelta import relativedelta
 from teller.model import Transaction, AccountType
 
-TARGET_FI = 'BMO'
+TARGET_FI = 'RBC'
 
 overrideDuplicates = True # True = assume all 'duplicate' transactions are valid
 debug = False # prints out one parsed PDF for you to manually test regex on
@@ -24,8 +24,8 @@ regexes = {
         'txn': (r"^(?P<dates>(?:\w{3} \d{2} ){2})"
             r"(?P<description>.+)\s"    
             r"(?P<amount>-?\$[\d,]+\.\d{2}-?)(?P<cr>(\-|\s?CR))?"),
-        'startyear': r'STATEMENT FROM .+(?P<year>-?\,.[0-9][0-9][0-9][0-9])',
-        'openbal': r'(PREVIOUS|Previous) (STATEMENT|ACCOUNT|Account) (BALANCE|Balance) (?P<balance>-?\$[\d,]+\.\d{2})(?P<cr>(\-|\s?CR))?',
+        'startyear': r'from .+(?P<year>-?\,.[0-9][0-9][0-9][0-9])',
+        'openbal': r'Opening Balance (\d{1,3}(,\d{3})*(\.\d+)?$)',
         'closingbal': r'(?:NEW|CREDIT) BALANCE (?P<balance>-?\$[\d,]+\.\d{2})(?P<cr>(\-|\s?CR))?'
     }, 
     'MFC': { 
@@ -163,7 +163,8 @@ def _validate(closing_bal, opening_bal, transactions):
 
 def _get_start_year(pdf_text, fi):
     print("Getting year...")
-    match = re.search(regexes[fi]['startyear'], pdf_text, re.IGNORECASE)
+    #print("###############PDF TEXT#################"+pdf_text)
+    match = re.search(regexes[fi]['startyear'], pdf_text, re.IGNORECASE) #####
     year = int(match.groupdict()['year'].replace(', ', ''))
     print("YEAR IS: %d" % year)
     return year
@@ -172,6 +173,9 @@ def _get_start_year(pdf_text, fi):
 def _get_opening_bal(pdf_text, fi):
     print("Getting opening balance...")
     match = re.search(regexes[fi]['openbal'], pdf_text)
+    print(pdf_text)
+    print(match)
+    print(regexes[fi]['openbal'])
     if (match.groupdict()['cr'] and '-' not in match.groupdict()['balance']):
         balance = float("-" + match.groupdict()['balance'].replace('$', ''))
         print("Patched credit balance found for opening balance: %f" % balance)
