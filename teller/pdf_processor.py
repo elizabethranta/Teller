@@ -26,7 +26,7 @@ regexes = {
             r"(?P<amount>-?\$[\d,]+\.\d{2}-?)(?P<cr>(\-|\s?CR))?"),
         'startyear': r'from .+(?P<year>-?\,.[0-9][0-9][0-9][0-9])',
         'openbal': r'Opening Balance (\d{1,3}(,\d{3})*(\.\d+)?$)',
-        'closingbal': r'(?:NEW|CREDIT) BALANCE (?P<balance>-?\$[\d,]+\.\d{2})(?P<cr>(\-|\s?CR))?'
+        'closingbal': r'Closing Balance (\$\d{1,3}(,\d{3})*(\.\d+)?$)'
     }, 
     'MFC': { 
         'txn': (r"^(?P<dates>(?:\d{2}\/\d{2} ){2})"
@@ -80,6 +80,7 @@ def _parse_visa(pdf_path):
 
         year = _get_start_year(text, TARGET_FI)
         opening_bal = _get_opening_bal(text, TARGET_FI)
+        
         closing_bal = _get_closing_bal(text, TARGET_FI)
         # add_seconds = 0
         
@@ -172,28 +173,31 @@ def _get_start_year(pdf_text, fi):
 
 def _get_opening_bal(pdf_text, fi):
     print("Getting opening balance...")
-    match = re.search(regexes[fi]['openbal'], pdf_text)
-    print(pdf_text)
-    print(match)
-    print(regexes[fi]['openbal'])
-    if (match.groupdict()['cr'] and '-' not in match.groupdict()['balance']):
-        balance = float("-" + match.groupdict()['balance'].replace('$', ''))
-        print("Patched credit balance found for opening balance: %f" % balance)
-        return balance
-
-    balance = float(match.groupdict()['balance'].replace(',', '').replace('$', ''))
-    print("Opening balance: %f" % balance)
+    match = re.search(regexes[fi]['openbal'], pdf_text, re.MULTILINE)
+    balance = float(match[1].replace(',', ''))
+    print("Opening balance: %f" %balance)
     return balance
+    # if (match.groupdict()['cr'] and '-' not in match.groupdict()['balance']):
+    #     balance = float("-" + match.groupdict()['balance'].replace('$', ''))
+    #     print("Patched credit balance found for opening balance: %f" % balance)
+    #     return balance
+
+    # balance = float(match.groupdict()['balance'].replace(',', '').replace('$', ''))
+    # print("Opening balance: %f" % balance)
+    # return balance
 
 
 def _get_closing_bal(pdf_text, fi):
     print("Getting closing balance...")
-    match = re.search(regexes[fi]['closingbal'], pdf_text)
-    if (match.groupdict()['cr'] and '-' not in match.groupdict()['balance']):
-        balance = float("-" + match.groupdict()['balance'].replace('$', ''))
-        print("Patched credit balance found for closing balance: %f" % balance)
-        return balance
-    
-    balance = float(match.groupdict()['balance'].replace(',', '').replace('$', '').replace(' ', ''))
-    print("Closing balance: %f" % balance)
+    match = re.search(regexes[fi]['closingbal'], pdf_text, re.MULTILINE)
+    balance = float(match[1].replace(',','').replace('$',''))
+    print("Closing balance: %f" %balance)
     return balance
+    # if (match.groupdict()['cr'] and '-' not in match.groupdict()['balance']):
+    #     balance = float("-" + match.groupdict()['balance'].replace('$', ''))
+    #     print("Patched credit balance found for closing balance: %f" % balance)
+    #     return balance
+    
+    # balance = float(match.groupdict()['balance'].replace(',', '').replace('$', '').replace(' ', ''))
+    # print("Closing balance: %f" % balance)
+    # return balance
